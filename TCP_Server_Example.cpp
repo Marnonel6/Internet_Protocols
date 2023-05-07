@@ -302,11 +302,43 @@ int main() {
         }
         std::cout << std::endl; // New line after clientData has been printed
 
-        // // Print out the RFID Data
-        // std::cout << "Head (hex): " << clientData[0] << " " << "\n";
-        // std::cout << "Type (hex): " << clientData[1] << " " << "\n";
-        // std::cout << "Len (hex): " << clientData[2] << " " << "\n";
-        // std::cout << std::endl;
+        // Extract out the RFID Data
+        std::cout << "Head (hex): " << clientData[0] << " " << "\n";
+        std::cout << "Type (hex): " << clientData[1] << " " << "\n";
+        std::cout << "Len (hex): " << clientData[2] << " " << "\n";
+        // Value used to extract data - 16 to convert from HEX to Int
+        int Len_int = std::stoi(clientData[2], nullptr, 16);
+        std::vector<std::string> Data(clientData.begin() + 3, clientData.begin() + 3 + Len_int); 
+        std::cout << "Data (hex): ";
+        for (int i = 0; i < Data.size(); i++) {
+             std::cout << Data[i] << " ";
+        }
+        std::cout << "\n";
+        std::string CRC = clientData[Len_int + 3];
+        std::cout << "CRC (hex): " << CRC << "\n";
+
+        // Calculate the Checksum to ensure correct data was received
+        int crc_sum = 0;
+        // Sum the hexadecimal values
+        for (int i = 1; i < Len_int + 3; i++) {
+            crc_sum += std::stoi(clientData[i], nullptr, 16);
+        }
+        int checksum_int = crc_sum & 0xFF; // Get the last two bytes of the sum
+        // Change to HEX value
+        std::stringstream crcSS;
+        crcSS << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(checksum_int);
+        std::string checksum = crcSS.str();
+        // Print the summed value in hexadecimal format
+        std::cout << "Summed value (hex): " << checksum << "\n";
+        // Compare the calculated checksum with the received checksum
+        if (checksum == CRC) {
+            std::cout << "\033[32mValid data. (Checksums match)\033[0m";
+        } else {
+            std::cout << "\033[31mInvalid data. (Checksums do not match)\033[0m";
+        }
+
+        std::cout << std::endl; // New line after clientData has been printed
+
 
         // Switch case to determine how to handle the RFID message based on its TYPE
         int TYPE;
@@ -316,19 +348,20 @@ int main() {
         switch (TYPE) {
             case 0x3a:
                 // Code to be executed if choice is 1
-                std::cout << "TCP connection with RFID reader successful" << std::endl;
+                std::cout << "\033[1;35mTCP connection with RFID reader successful\033[0m" << std::endl;
                 break;
             case 0x17:
                 // Code to be executed if choice is 2
-                std::cout << "TAG Read" << std::endl;
+                std::cout << "\033[1;36mTAG Read\033[0m" << std::endl;
+                   // Extract a subset of elements from index 1 to 3 (exclusive)
                 break;
             case 0x40:
                 // Code to be executed if choice is 3
-                std::cout << "Heartbeat" << std::endl;
+                std::cout << "\033[1;33mHeartbeat\033[0m" << std::endl;
                 break;
             default:
                 // Code to be executed if choice doesn't match any case
-                std::cout << "The RFID type is not recognized" << std::endl;
+                std::cout << "\033[1;31mThe RFID type is not recognized\033[0m" << std::endl;
                 break;
         }
 
