@@ -237,26 +237,14 @@ int main() {
 
     std::cout << "Accepted connection from " << inet_ntoa(serverAddress.sin_addr) << ":" << ntohs(serverAddress.sin_port) << std::endl;
 
-    // Register signal handler for Ctrl+C (SIGINT)
-    std::signal(SIGINT, signalHandler);
-
-    // // CSV file for logging client data
-    // std::string baseFilename = "client_data_log";
-    // std::string filename = generateNewFilename(baseFilename);
-    // csvFile.open(filename, std::ios::out | std::ios::app);
-
     // CSV file for logging client data
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // Get current date and time
-    // Convert current time to string with desired format
-    std::string folderName = "data_logs";
-    std::stringstream ssTime;
-    ssTime << folderName << "/" << "client_data_log_" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d");
-    std::string baseFilename = ssTime.str();
-    // std::string baseFilename = "client_data_log";
-
+    std::string folderName = "data_logs"; // Folder to save data logs in
+    std::string baseFilename = folderName + "/" + "client_data_log";
     std::string filename = generateNewFilename(baseFilename);
     csvFile.open(filename, std::ios::out | std::ios::app);
 
+    // Register signal handler for Ctrl+C (SIGINT)
+    std::signal(SIGINT, signalHandler);
 
 
     /* Receive data from the client and print it in hexadecimal
@@ -290,11 +278,11 @@ int main() {
     The code also logs the client data to a csv file.
     */
     while ((valRead = read(clientSocket, buffer, BUFFER_SIZE)) > 0) {
-        // std::cout << "Received data (hex): ";
+        std::cout << "Received client data (hex): ";
         for (int i = 0; i < valRead; i++) {
             unsigned char value = static_cast<unsigned char>(buffer[i]);
-            // std::cout << std::hex << std::setw(2) << std::setfill('0') <<
-            // static_cast<unsigned int>(value) << " ";
+            std::cout << std::hex << std::setw(2) << std::setfill('0') <<
+            static_cast<unsigned int>(value) << " ";
 
             // Save data to CSV file as hex values
             std::stringstream ss;
@@ -312,13 +300,6 @@ int main() {
 
         // Add a new line to the CSV file after each message
         csvFile << "\n";
-
-        // Print out the clientData
-        std::cout << "Client data (hex): ";
-        for (int i = 0; i < clientData.size(); i++) {
-             std::cout << clientData[i] << " ";
-        }
-        std::cout << std::endl; // New line after clientData has been printed
 
         // Extract out the RFID Data frames
         std::cout << "Head (hex): " << clientData[0] << " " << "\n";
@@ -439,47 +420,19 @@ void signalHandler(int signal) {
     exit(signal);
 }
 
-// // Generate a new filename if the base filename already exists
-// std::string generateNewFilename(const std::string& baseFilename) {
-//     std::string newFilename = baseFilename;
-//     int counter = 1;
-//     newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
-
-//     while (std::ifstream(newFilename)) {
-//         counter++;
-//         newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
-//     }
-
-//     return newFilename;
-// }
-
-
-// // Generate a new filename if the base filename already exists
-// std::string generateNewFilename(const std::string& baseFilename) {
-//     // Generate a unique identifier (e.g., incrementing number)
-//     int identifier = 1;
-//     std::string filename;
-//     do {
-//         std::stringstream filenameSS;
-//         filenameSS << baseFilename << "_" << identifier << + ".csv";
-//         filename = filenameSS.str();
-//         identifier++;
-//     } while (std::ifstream(filename));
-
-//     return filename;
-// }
-
-// Generate a new filename if the base filename already exists
+// Generate a new filename with creation date and time
 std::string generateNewFilename(const std::string& baseFilename) {
-    // Generate a unique identifier (e.g., incrementing number)
-    int identifier = 1;
-    std::string filename;
-    do {
-        std::stringstream filenameSS;
-        filenameSS << baseFilename << "_" << identifier << ".csv";
-        filename = filenameSS.str();
-        identifier++;
-    } while (std::ifstream(filename.c_str()));
+    // Get the current date and time
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
 
-    return filename;
+    // Format the date and time
+    std::stringstream datetimeSS;
+    datetimeSS << std::put_time(std::localtime(&currentTime), "%Y-%m-%d_%H-%M-%S");
+    std::string datetime = datetimeSS.str();
+
+    // Construct the filename
+    std::stringstream filenameSS;
+    filenameSS << baseFilename << "_" << datetime << ".csv";
+    return filenameSS.str();
 }
