@@ -33,6 +33,8 @@
     <vector>: This library provides a container class called std::vector that represents a dynamic array.
     <csignal>: This library provides access to the C standard library signal handling.
     <string>: This library provides access to the C++ standard library string handling.
+    <chrono>: This library provides access to the C++ standard library time handling.
+    <ctime>: This library provides access to the C standard library time handling.
 */
 #include <iostream>
 #include <cstring>
@@ -45,6 +47,8 @@
 #include <vector>
 #include <csignal>
 #include <string>
+#include <chrono>
+#include <ctime>
 
 #define PORT 6000           // Port that the RFID reader sends data through
 #define BUFFER_SIZE 1024    // Maximum amount of bytes that can be read in one message from the client
@@ -236,10 +240,24 @@ int main() {
     // Register signal handler for Ctrl+C (SIGINT)
     std::signal(SIGINT, signalHandler);
 
+    // // CSV file for logging client data
+    // std::string baseFilename = "client_data_log";
+    // std::string filename = generateNewFilename(baseFilename);
+    // csvFile.open(filename, std::ios::out | std::ios::app);
+
     // CSV file for logging client data
-    std::string baseFilename = "client_data_log";
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // Get current date and time
+    // Convert current time to string with desired format
+    std::string folderName = "data_logs";
+    std::stringstream ssTime;
+    ssTime << folderName << "/" << "client_data_log_" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d");
+    std::string baseFilename = ssTime.str();
+    // std::string baseFilename = "client_data_log";
+
     std::string filename = generateNewFilename(baseFilename);
     csvFile.open(filename, std::ios::out | std::ios::app);
+
+
 
     /* Receive data from the client and print it in hexadecimal
 
@@ -421,16 +439,47 @@ void signalHandler(int signal) {
     exit(signal);
 }
 
+// // Generate a new filename if the base filename already exists
+// std::string generateNewFilename(const std::string& baseFilename) {
+//     std::string newFilename = baseFilename;
+//     int counter = 1;
+//     newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
+
+//     while (std::ifstream(newFilename)) {
+//         counter++;
+//         newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
+//     }
+
+//     return newFilename;
+// }
+
+
+// // Generate a new filename if the base filename already exists
+// std::string generateNewFilename(const std::string& baseFilename) {
+//     // Generate a unique identifier (e.g., incrementing number)
+//     int identifier = 1;
+//     std::string filename;
+//     do {
+//         std::stringstream filenameSS;
+//         filenameSS << baseFilename << "_" << identifier << + ".csv";
+//         filename = filenameSS.str();
+//         identifier++;
+//     } while (std::ifstream(filename));
+
+//     return filename;
+// }
+
 // Generate a new filename if the base filename already exists
 std::string generateNewFilename(const std::string& baseFilename) {
-    std::string newFilename = baseFilename;
-    int counter = 1;
-    newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
+    // Generate a unique identifier (e.g., incrementing number)
+    int identifier = 1;
+    std::string filename;
+    do {
+        std::stringstream filenameSS;
+        filenameSS << baseFilename << "_" << identifier << ".csv";
+        filename = filenameSS.str();
+        identifier++;
+    } while (std::ifstream(filename.c_str()));
 
-    while (std::ifstream(newFilename)) {
-        counter++;
-        newFilename = baseFilename + "_" + std::to_string(counter) + ".csv";
-    }
-
-    return newFilename;
+    return filename;
 }
