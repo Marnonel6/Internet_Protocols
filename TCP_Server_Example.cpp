@@ -18,6 +18,8 @@
  * Author: Marthinus (Marno) Nel
  * Created Date: 05/05/2023
  * Last Updated: 05/05/2023
+ * 
+ * Additional documentation: https://www.geeksforgeeks.org/socket-programming-cc/
 */
 
 /* Libraries:
