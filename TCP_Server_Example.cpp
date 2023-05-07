@@ -302,21 +302,27 @@ int main() {
         }
         std::cout << std::endl; // New line after clientData has been printed
 
-        // Extract out the RFID Data
+        // Extract out the RFID Data frames
         std::cout << "Head (hex): " << clientData[0] << " " << "\n";
-        std::cout << "Type (hex): " << clientData[1] << " " << "\n";
+
+        int TYPE;
+        std::stringstream cs(clientData[1]);
+        cs >> std::hex >> TYPE;                 // Change string to HEX
+        std::cout << "Type (hex): "  << std::hex << TYPE << " " << "\n";
+
         std::cout << "Len (hex): " << clientData[2] << " " << "\n";
         // Value used to extract data - 16 to convert from HEX to Int
         int Len_int = std::stoi(clientData[2], nullptr, 16);
+
         std::vector<std::string> Data(clientData.begin() + 3, clientData.begin() + 3 + Len_int); 
         std::cout << "Data (hex): ";
         for (int i = 0; i < Data.size(); i++) {
              std::cout << Data[i] << " ";
         }
         std::cout << "\n";
+
         std::string CRC = clientData[Len_int + 3];
         std::cout << "CRC (hex): " << CRC << "\n";
-
         // Calculate the Checksum to ensure correct data was received
         int crc_sum = 0;
         // Sum the hexadecimal values
@@ -341,10 +347,6 @@ int main() {
 
 
         // Switch case to determine how to handle the RFID message based on its TYPE
-        int TYPE;
-        std::stringstream cs(clientData[1]);
-        cs >> std::hex >> TYPE;                 // Change string to HEX
-
         switch (TYPE) {
             case 0x3a:
                 // Code to be executed if choice is 1
