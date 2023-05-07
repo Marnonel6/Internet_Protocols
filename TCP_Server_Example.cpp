@@ -35,6 +35,7 @@
     <string>: This library provides access to the C++ standard library string handling.
     <chrono>: This library provides access to the C++ standard library time handling.
     <ctime>: This library provides access to the C standard library time handling.
+    <unordered_map>: This library provides access to the C++ standard library unordered map.
 */
 #include <iostream>
 #include <cstring>
@@ -49,6 +50,7 @@
 #include <string>
 #include <chrono>
 #include <ctime>
+#include <unordered_map>
 
 #define PORT 6000           // Port that the RFID reader sends data through
 #define BUFFER_SIZE 1024    // Maximum amount of bytes that can be read in one message from the client
@@ -58,10 +60,14 @@ using namespace std;
 // Function prototypes
 void signalHandler(int signal);
 std::string generateNewFilename(const std::string& baseFilename);
+std::string createKey(const std::vector<std::string>& Data);
+void printEpcTagFrequencies(const std::unordered_map<std::string, int>& epcTagCounts);
 
 // Global variables
-std::ofstream csvFile; // csv file to save client data to
-std::vector<std::string> clientData;
+std::ofstream csvFile;                                  // csv file to save client data to
+std::vector<std::string> clientData;                    // Sting of HEX values from Client
+std::unordered_map<std::string, int> EPC_Tag_Counts;    // Count of specific EPC tag
+std::vector<std::string> EPC;                           // RFID tag EPC identification
 
 // Main function
 int main() {
@@ -295,8 +301,8 @@ int main() {
             std::string formattedValue = valueSS.str();
             clientData.push_back(formattedValue);
         }
-        std::cout << std::dec << std::endl;
-        memset(buffer, 0, sizeof(buffer)); // Clear buffer
+        std::cout << std::dec << std::endl; // Set printing method back to decimal
+        memset(buffer, 0, sizeof(buffer));  // Clear buffer
 
         // Add a new line to the CSV file after each message
         csvFile << "\n";
@@ -313,7 +319,7 @@ int main() {
         // Value used to extract data - 16 to convert from HEX to Int
         int Len_int = std::stoi(clientData[2], nullptr, 16);
 
-        std::vector<std::string> Data(clientData.begin() + 3, clientData.begin() + 3 + Len_int); 
+        std::vector<std::string> Data(clientData.begin() + 3, clientData.begin() + 3 + Len_int);
         std::cout << "Data (hex): ";
         for (int i = 0; i < Data.size(); i++) {
              std::cout << Data[i] << " ";
@@ -342,7 +348,7 @@ int main() {
             std::cout << "\033[31mInvalid data. (Checksums do not match)\033[0m";
         }
 
-        std::cout << std::endl; // New line after clientData has been printed
+        std::cout << std::dec << std::endl; // New line after clientData and set printing type back to decimal
 
 
         // Switch case to determine how to handle the RFID message based on its TYPE
@@ -354,7 +360,13 @@ int main() {
             case 0x17:
                 // Code to be executed if choice is 2
                 std::cout << "\033[1;36mTAG Read\033[0m" << std::endl;
-                   // Extract a subset of elements from index 1 to 3 (exclusive)
+                // Add data to the EPC_Tag_Counts
+                EPC.insert(EPC.begin(), Data.begin(), Data.begin() + Len_int - 5);  //  TODO delete the -5 and create another variable called EPC
+                EPC_Tag_Counts[createKey(EPC)]++;
+                // Clear EPC vector
+                EPC.clear();
+                // Print the EPC_Tag_Counts
+                printEpcTagFrequencies(EPC_Tag_Counts);
                 break;
             case 0x40:
                 // Code to be executed if choice is 3
@@ -435,4 +447,24 @@ std::string generateNewFilename(const std::string& baseFilename) {
     std::stringstream filenameSS;
     filenameSS << baseFilename << "_" << datetime << ".csv";
     return filenameSS.str();
+}
+
+// Create concatenated key for RFID EPC HEX values
+std::string createKey(const std::vector<std::string>& Data) {
+    std::string key;
+    for (const std::string& value : Data) {
+        key += value;
+    }
+    return key;
+}
+
+// Print the frequency of EPC tags in the hashmap
+void printEpcTagFrequencies(const std::unordered_map<std::string, int>& epcTagCounts) {
+    std::cout << "EPC tag frequencies:\n";
+    for (const auto& entry : epcTagCounts) {
+        const std::string& epcTag = entry.first;
+        int frequency = entry.second;
+        std::cout << "EPC tag: " << epcTag << ", Frequency: " << frequency << '\n';
+    }
+    std::cout << std::endl;
 }
