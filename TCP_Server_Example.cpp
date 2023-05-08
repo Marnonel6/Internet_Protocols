@@ -12,6 +12,11 @@
  * Netmask: 255.255.255.0
  * Gateway: 192.168.1.1
  * 
+ * Raspberry Pi 4B:
+ * - If the connection is not established then tbe firewall might be blocking the communications
+ *      sudo iptables -A INPUT -p tcp -j ACCEPT
+ *          https://raspberrypi.stackexchange.com/a/71124
+ * 
  * Compile: g++ TCP_Server_Example.cpp -o TCP_Server_Example
  * Execute: ./TCP_Server_Example
  * 
