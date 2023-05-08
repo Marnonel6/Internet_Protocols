@@ -75,6 +75,7 @@ std::ofstream csvFile;                                  // csv file to save clie
 std::vector<std::string> clientData;                    // Sting of HEX values from Client
 std::unordered_map<std::string, int> EPC_Tag_Counts;    // Count of specific EPC tag
 std::vector<std::string> EPC;                           // RFID tag EPC identification
+int EPC_len = 12;                                       // EPC is 12 bytes long
 
 // Main function
 int main() {
@@ -323,6 +324,7 @@ int main() {
         std::cout << "Type (hex): "  << std::hex << TYPE << " " << "\n";
 
         std::cout << "Len (hex): " << clientData[2] << " " << "\n";
+        // Actual len should be the decimal value of obtained from the (hex) Len
         // Value used to extract data - 16 to convert from HEX to Int
         int Len_int = std::stoi(clientData[2], nullptr, 16);
 
@@ -367,8 +369,9 @@ int main() {
             case 0x17:
                 // Code to be executed if choice is 2
                 std::cout << "\033[1;36mTAG Read\033[0m" << std::endl;
-                // Add data to the EPC_Tag_Counts
-                EPC.insert(EPC.begin(), Data.begin(), Data.begin() + Len_int - 5);  //  TODO delete the -5 and create another variable called EPC
+                // Extract EPC from DATA
+                EPC.insert(EPC.begin(), Data.begin() + 2, Data.begin() + 2 + EPC_len);
+                // Update EPC frequency hashmap
                 EPC_Tag_Counts[createKey(EPC)]++;
                 // Clear EPC vector
                 EPC.clear();
